@@ -1,3 +1,4 @@
+import 'package:demo/S1.dart';
 import 'package:demo/assignment.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,16 +19,14 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        inputDecorationTheme: InputDecorationTheme(
-        focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.blue),
-    )
-
-
-    ),
+    //     inputDecorationTheme: InputDecorationTheme(
+    //     focusedBorder: OutlineInputBorder(
+    //     borderSide: BorderSide(color: Colors.blue),
+    // )
+    // ),
         primarySwatch: Colors.blue,
       ),
-      home: SplashScreen()
+      home: SplashScreen(),
     );
   }
 }

@@ -11,8 +11,9 @@ class UserinfoScreen extends StatefulWidget {
 }
 
 class _UserinfoScreenState extends State<UserinfoScreen> {
-  final TextEditingController _usernameConterller = TextEditingController(text: 'S#####');
-  final TextEditingController _userphoneConterller = TextEditingController(text: '+91836xxxxx');
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _userphoneController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,6 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
         actions: [
           TextButton(
               onPressed: () async {
-                await FirebaseAuth.instance.signOut();
                 Get.offAll(LoginScreen());
               },
               child: Text('Log-out')
@@ -53,10 +53,12 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: TextField(
-                        controller: _usernameConterller,
+                        controller: _usernameController,
                         decoration: InputDecoration(
                           hintText: 'Enter your name',
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
                         ),
                       ),
                     ),
@@ -77,9 +79,16 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '+912936xxxxxx',
-                          style: TextStyle(fontSize: 18),
+                        Expanded(
+                          child: TextField(
+                            controller: _userphoneController,
+                            decoration: InputDecoration(
+                              hintText: 'enter here',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                            ),
+                          ),
                         ),
                         Icon(Icons.edit),
                       ],
@@ -110,6 +119,11 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
                     ),
                   ),
                 ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: (){},
+                child: Text('Save'),
               ),
             ],
           ),
