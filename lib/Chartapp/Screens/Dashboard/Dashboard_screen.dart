@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:demo/Chartapp/Screens/Message/Message_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-
 import 'Userinfo/Userinfo_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -12,22 +13,27 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<Users> users = [
-    Users(username: 'user1', description: 'This is user 1', img: 'https://...'),
-    // Add other users similarly
-  ];
-
+  List<Users> users = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = false;
-  late Map<String, dynamic> userMap;
+  late Map<String, dynamic> userMap = {};
   final TextEditingController _search = TextEditingController();
+
+  String chatRoomId(String user1, String user2) {
+    if (user1[0].toLowerCase().codeUnits[0] > user2.toLowerCase().codeUnits[0]) {
+      return "$user1$user2";
+    } else {
+      return "$user2$user1";
+    }
+  }
+
 
   void onSearch() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
     setState(() {
       isLoading = true;
     });
-
     try {
       await _firestore
           .collection('users')
@@ -35,10 +41,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .get()
           .then((value) {
         setState(() {
-          userMap = value.docs[0].data();
+          if (value.docs.isNotEmpty) {
+            userMap = value.docs[0].data();
+            if (!users.any((user) => user.description == userMap['email'])) {
+              users.add(
+                Users(
+                  username: userMap['name'] ?? 'No name',
+                  description: userMap['email'] ?? 'No email',
+                  img: userMap['img'] ?? 'https://via.placeholder.com/150', // Add a placeholder image URL
+                ),
+              );
+              Get.snackbar(
+                'User Added',
+                'User has been added to the list.',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            } else {
+              Get.snackbar(
+                'User Exists',
+                'This user is already in the list.',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            }
+          } else {
+            Get.snackbar(
+              'User Not Found',
+              'No user found with this email.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
           isLoading = false;
+          _search.clear();
         });
-        print(userMap);
       });
     } catch (e) {
       setState(() {
@@ -72,7 +106,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )
         ],
       ),
-
       body: Center(
         child: isLoading
             ? Center(
@@ -80,12 +113,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
         )
             : Column(
           children: [
-            userMap != null? ListTile(
-              title: Text(userMap['name'],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
-              subtitle: Text(userMap['email']),
-              leading: CircleAvatar(maxRadius: 35,),
-              trailing: Icon(Icons.verified_user),
-            ): Container(),Divider(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  return Slidable(
+                    key: Key(users[index].description),
+                    startActionPane: ActionPane(
+                      motion: ScrollMotion(),
+                      children: [
+                        SlidableAction(
+                          onPressed: (context) {
+                            setState(() {
+                              users.removeAt(index);
+                            });
+                          },
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          icon: Icons.delete,
+                          label: 'Delete',
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: ListTile(
+                        onTap: () {
+                          String roomId = chatRoomId(
+                              _auth.currentUser!.displayName!,
+                              userMap!['name']);
+
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => Message_Screen(
+                                chatRoomId: roomId,
+                                userMap: userMap,
+                              ),
+                            ),
+                          );
+                          },
+                        title: Text(
+                          users[index].username,
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                        ),
+                        subtitle: Text(users[index].description),
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(users[index].img),
+                          maxRadius: 35,
+                        ),
+                        trailing: Icon(Icons.verified_user),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -103,10 +188,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: TextField(
                         controller: _search,
                         decoration: InputDecoration(
-                            hintText: 'Search',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            )),
+                          hintText: 'Search',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -116,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onSearch();
                       Get.back();
                     },
-                    child: Text('ok'),
+                    child: Text('OK'),
                   ),
                 ],
               ),
