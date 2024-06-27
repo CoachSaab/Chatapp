@@ -21,6 +21,8 @@ class _Message_ScreenState extends State<Message_Screen> {
 
   bool _isBottomSheetExpanded = false;
   bool _isTyping = false;
+  ScrollController _scrollController = ScrollController();
+
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
 
@@ -29,6 +31,8 @@ class _Message_ScreenState extends State<Message_Screen> {
 
   final TextEditingController _message = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+
 
   void onSendMessage() async {
     if (_message.text.isNotEmpty) {
@@ -84,13 +88,15 @@ class _Message_ScreenState extends State<Message_Screen> {
 
 
       body: SingleChildScrollView(
-        physics: ScrollPhysics(),
+        physics: AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          padding: const EdgeInsets.all(10),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                height: MediaQuery.of(context).size.height,
+                height: MediaQuery.of(context).size.height*0.8,
                 width: MediaQuery.of(context).size.width,
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore
@@ -102,6 +108,7 @@ class _Message_ScreenState extends State<Message_Screen> {
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (snapshot.data != null) {
                       return ListView.builder(
+                        controller: _scrollController,
                         itemCount: snapshot.data?.docs.length ?? 0,
                         itemBuilder: (context, index) {
                           Map<String, dynamic>? map = snapshot.data?.docs[index].data() as Map<String, dynamic>?;
@@ -124,7 +131,9 @@ class _Message_ScreenState extends State<Message_Screen> {
       ),
 
 
-      bottomSheet: GestureDetector(
+
+
+        bottomSheet: GestureDetector(
         onTap: () {},
         child: AnimatedContainer(
           duration: Duration(milliseconds: 300),
@@ -269,4 +278,6 @@ class _Message_ScreenState extends State<Message_Screen> {
       print('Error picking image: $e');
     }
   }
+
 }
+

@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';  // For jsonEncode and jsonDecode
 import 'Userinfo/Userinfo_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -20,6 +22,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Map<String, dynamic> userMap = {};
   final TextEditingController _search = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    loadUsers();
+  }
+
   String chatRoomId(String user1, String user2) {
     if (user1[0].toLowerCase().codeUnits[0] > user2.toLowerCase().codeUnits[0]) {
       return "$user1$user2";
@@ -28,6 +36,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> loadUsers() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? usersString = prefs.getString('users');
+    if (usersString != null) {
+      setState(() {
+        List<dynamic> usersJson = jsonDecode(usersString);
+        users = usersJson.map((userJson) => Users.fromJson(userJson)).toList();
+      });
+    }
+  }
+
+  Future<void> saveUsers() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String usersString = jsonEncode(users.map((user) => user.toJson()).toList());
+    await prefs.setString('users', usersString);
+  }
 
   void onSearch() async {
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -48,9 +72,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Users(
                   username: userMap['name'] ?? 'No name',
                   description: userMap['email'] ?? 'No email',
-                  img: userMap['img'] ?? 'https://via.placeholder.com/150', // Add a placeholder image URL
+                  img: userMap['img'] ?? 'https://imgs.search.brave.com/up0gxYmDpVS7RGqtUKxXAVNW0TB1xBiwgaqJQ1J0FEE/rs:fit:500:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzA1Lzg3Lzc2LzY2/LzM2MF9GXzU4Nzc2/NjY1M19Qa0JOeUd4/N21RaDlsMVhYUHRD/QXExbEJnT3NMbDZ4/SC5qcGc', // Add a placeholder image URL
                 ),
               );
+              saveUsers();  // Save users list after adding a new user
               Get.snackbar(
                 'User Added',
                 'User has been added to the list.',
@@ -126,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           onPressed: (context) {
                             setState(() {
                               users.removeAt(index);
+                              saveUsers();  // Save users list after removing a user
                             });
                           },
                           backgroundColor: Colors.red,
@@ -154,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           );
-                          },
+                        },
                         title: Text(
                           users[index].username,
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
@@ -226,4 +252,20 @@ class Users {
     required this.description,
     required this.img,
   });
+
+  factory Users.fromJson(Map<String, dynamic> json) {
+    return Users(
+      username: json['username'],
+      description: json['description'],
+      img: json['img'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'username': username,
+      'description': description,
+      'img': img,
+    };
+  }
 }
