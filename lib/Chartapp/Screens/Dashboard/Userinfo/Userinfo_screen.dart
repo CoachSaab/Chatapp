@@ -32,7 +32,7 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
         final data = userData.data();
         if (data != null) {
           _usernameController.text = data['name'] ?? '';
-          _userphoneController.text = data['phone'] ?? '';
+          _userphoneController.text = data['email'] ?? '';
           _aboutController.text = data['about'] ?? '';
         }
       }
@@ -91,7 +91,7 @@ class _UserinfoScreenState extends State<UserinfoScreen> {
                 ),
               ),
               SizedBox(height: 20),
-              Text('Phone Number'),
+              Text('Email Id'),
               Container(
                 height: 40,
                 decoration: BoxDecoration(

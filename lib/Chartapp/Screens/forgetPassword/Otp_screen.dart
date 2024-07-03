@@ -1,5 +1,8 @@
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:get/get.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 
 import 'PasswordChange_screen.dart';
 
@@ -11,13 +14,45 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  String otp = '';
+
+  void emailVerification () {
+
+    if(otp.isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('field is empty')),
+      );
+      return;
+    }
+
+
+    try{
+      bool result = EmailOTP.verifyOTP(otp: otp);
+
+      if(result){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('OTP verify successfully ')),
+        );
+        Get.to(() => PasswordchangeScreen());
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid OTP'),),
+        );
+      }
+    }catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('OTP error: $e')),
+      );
+
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
           fit: StackFit.expand,
           children:<Widget>[
-
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -59,32 +94,17 @@ class _OtpScreenState extends State<OtpScreen> {
                           OtpTextField(
                             numberOfFields: 5,
                             borderColor: Color(0xFF512DA8),
-                            //set to true to show as box or false to show as dash
                             showFieldAsBox: true,
-                            //runs when a code is typed in
-                            onCodeChanged: (String code) {
-                              //handle validation or checks here
-                            },
-                            //runs when every textfield is filled
+                            onCodeChanged: (String code) {},
                             onSubmit: (String verificationCode){
-                              showDialog(
-                                  context: context,
-                                  builder: (context){
-                                    return AlertDialog(
-                                      title: Text("Verification Code"),
-                                      content: Text('Code entered is $verificationCode'),
-                                    );
-                                  }
-                              );
-                            }, // end onSubmit
+                              otp = verificationCode;
+                            },
                           ),
-
 
                           SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>PasswordchangeScreen()));
-
+                              emailVerification();
                             },
                             child: Text('Next'),
                             style: ElevatedButton.styleFrom(

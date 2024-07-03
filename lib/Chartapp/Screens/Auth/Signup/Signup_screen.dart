@@ -202,7 +202,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       Divider(),
                       TextButton(
                         onPressed: () async {
-                          // Add Google Sign-In functionality here
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
