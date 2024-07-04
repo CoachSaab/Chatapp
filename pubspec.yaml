@@ -56,6 +56,8 @@ dependencies:
   ffi: ^2.1.2
   shared_preferences: ^2.2.3
   email_otp: ^3.0.1
+  firebase_storage: ^12.1.0
+  uuid: ^4.4.0
 
 
 

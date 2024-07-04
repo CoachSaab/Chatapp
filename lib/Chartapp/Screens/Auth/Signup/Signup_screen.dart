@@ -23,6 +23,7 @@ Future<User?> createAccount(String name, String email, String password, String p
       "status": "Unavailable",
       "uid": _auth.currentUser!.uid,
       "phone": phone,
+       "uid": _auth.currentUser!.uid,
     });
 
     return userCredential.user;

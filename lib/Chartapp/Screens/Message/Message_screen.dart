@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 
 class Message_Screen extends StatefulWidget {
@@ -23,14 +27,34 @@ class _Message_ScreenState extends State<Message_Screen> {
   bool _isTyping = false;
   ScrollController _scrollController = ScrollController();
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _message = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  File? imageFile;
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
 
+  Future<void> pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        // Handle the selected image
+        print('Image picked: ${pickedFile.path}');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  Future uploadImage() async{
 
-  final TextEditingController _message = TextEditingController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+    String fileName = Uuid().v1();
+    var ref  = FirebaseStorage.instance.ref().child('image').child('$fileName.jpg');
+    var uploadTask = await ref.putFile(imageFile!);
+
+    String ImageUrl = await uploadTask.ref.getDownloadURL() as String;
+  }
 
 
 
@@ -57,7 +81,23 @@ class _Message_ScreenState extends State<Message_Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.userMap['name'], style: TextStyle(color: Colors.black)),
+        title: StreamBuilder<DocumentSnapshot>(
+          stream:  _firestore.collection('users').doc(widget.userMap['uid']).snapshots(),
+          builder: (context, snapshot) {
+            if(snapshot.data != null){
+              return Container(
+                child: Column(
+                  children: [
+                    Text(widget.userMap['name']),
+                    Text(snapshot.data?['status'],style: TextStyle(color: Colors.grey.shade500,fontSize: 15),),
+                  ],
+                ),
+              );
+            }else{
+              return Container();
+            }
+          },
+        ),
         backgroundColor: Colors.blueGrey.shade100,
         actions: [
           Padding(
@@ -267,17 +307,7 @@ class _Message_ScreenState extends State<Message_Screen> {
     );
   }
 
-  Future<void> pickImage(ImageSource source) async {
-    try {
-      final pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        // Handle the selected image
-        print('Image picked: ${pickedFile.path}');
-      }
-    } catch (e) {
-      print('Error picking image: $e');
-    }
-  }
+
 
 }
 

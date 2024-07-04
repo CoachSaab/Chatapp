@@ -12,13 +12,41 @@ class DashboardScreen extends StatefulWidget {
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>  with WidgetsBindingObserver {
+
   List<Users> users = [];
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = false;
+
   late Map<String, dynamic> userMap = {};
   final TextEditingController _search = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    setStatus("Online");
+  }
+
+  void setStatus(String status) async{
+    await _firestore.collection('users').doc(_auth.currentUser?.uid).update({
+      'status':status,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+
+    if (state == AppLifecycleState.resumed){
+      //online
+      setStatus('Online');
+    }else{
+      //offline
+      setStatus('Offline');
+    }
+
+  }
+
 
   String chatRoomId(String user1, String user2) {
     if (user1[0].toLowerCase().codeUnits[0] > user2.toLowerCase().codeUnits[0]) {
@@ -226,4 +254,6 @@ class Users {
     required this.description,
     required this.img,
   });
+
+
 }
